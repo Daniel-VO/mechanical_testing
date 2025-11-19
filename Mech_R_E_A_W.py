@@ -1,5 +1,5 @@
 """
-Created 26. November 2024 by Daniel Van Opdenbosch, Technical University of Munich
+Created 19. November 2025 by Daniel Van Opdenbosch, Technical University of Munich
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed without any warranty or implied warranty of merchantability or fitness for a particular purpose. See the GNU general public license for more details: <http://www.gnu.org/licenses/>
 """
@@ -15,7 +15,7 @@ import matplotlib.patheffects as pe
 from scipy import stats
 
 def Bahadur(f,wDehnung,wSpannung):
-	slope,intercept,low_slope,high_slope=stats.theilslopes(np.log(wSpannung),x=wDehnung)
+	slope,intercept=stats.siegelslopes(np.log(wSpannung),x=wDehnung)
 	m,sigma0=slope,np.exp(intercept)
 	plt.plot(wDehnung,sigma0*np.exp(m*wDehnung))
 	plt.plot(wDehnung,wSpannung)
@@ -58,19 +58,19 @@ def mech(f,Dehngrenze,L,alpha,*args):
 
 	Schritte=5	#
 	Punkte=int(np.where(Spannung==R)[0][0]/Schritte)
-	theils=np.array([])
-	for i in np.arange(1,Schritte):
+	siegels=np.array([])
+	for i in range(1,Schritte):
 		ind=np.arange(i*Punkte,(i+1)*Punkte)
-		theils=np.append(theils,stats.theilslopes(Spannung[ind],x=Dehnung[ind]))
-	theils=theils.reshape(Schritte-1,4)
+		siegels=np.append(siegels,stats.siegelslopes(Spannung[ind],x=Dehnung[ind]))
+	siegels=siegels.reshape(Schritte-1,2)
 	try:
-		theil=theils[np.argmax(theils[:,0])]
+		siegel=siegels[np.argmax(siegels[:,0])]
 	except:
 		os.system('mv '+f+' '+filename+'.aus')
 		plt.close('all')
 		plt.plot(Dehnung,Spannung)
 		plt.savefig(filename+'_aus.png',dpi=300)
-	E,disp,Econflo,Econfup=theil[0],theil[1],theil[2],theil[3]
+	E,disp=siegel[0],siegel[1]
 
 	Dehnung+=disp/E
 	Spannung,Dehnung=np.append(0,Spannung[np.where(Dehnung>0)]),np.append(0,Dehnung[np.where(Dehnung>0)])
@@ -105,8 +105,8 @@ def mech(f,Dehngrenze,L,alpha,*args):
 	plt.figure(figsize=(7.5/2.54,5.3/2.54))
 
 	plt.plot(Dehnung,Dehnung*E,'k',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
-	plt.plot(Dehnung,Dehnung*Econflo,'k:',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
-	plt.plot(Dehnung,Dehnung*Econfup,'k:',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
+	# ~ plt.plot(Dehnung,Dehnung*Econflo,'k:',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
+	# ~ plt.plot(Dehnung,Dehnung*Econfup,'k:',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
 
 	plt.plot(Dehnung+Dehngrenze,Dehnung*E,'k--',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
 	plt.errorbar(Dehngrenze,0,marker='s',color='k',markersize=1,elinewidth=0.5,capthick=0.5,capsize=2,linewidth=0,path_effects=[pe.Stroke(linewidth=2,foreground='w'),pe.Normal()],zorder=10)
