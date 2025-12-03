@@ -1,5 +1,5 @@
 """
-Created 19. November 2025 by Daniel Van Opdenbosch, Technical University of Munich
+Created 03. Dezember 2025 by Daniel Van Opdenbosch, Technical University of Munich
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed without any warranty or implied warranty of merchantability or fitness for a particular purpose. See the GNU general public license for more details: <http://www.gnu.org/licenses/>
 """
@@ -50,9 +50,9 @@ def mech(f,Dehngrenze,L,alpha,*args):
 	else:
 		Zeit_s,Kraft_N,Weg_mm,Spannung_MPa,Dehnung_perc=np.genfromtxt((t.replace(',','.') for t in open(f)),delimiter='\t',unpack=True,skip_header=1,skip_footer=0,usecols=range(5))
 	Spannung=Kraft_N/(h*b1)
-	Dehnung=Weg_mm/(L*1e3+(Weg_mm[np.where(Kraft_N>0)][0]-Weg_mm[0]))/(2*alpha+1)
+	Dehnung=Weg_mm/(L*1e3+(Weg_mm[Kraft_N>0][0]-Weg_mm[0]))/(2*alpha+1)
 
-	Spannung,Dehnung=Spannung[np.where(Spannung>0)],Dehnung[np.where(Spannung>0)]-Dehnung[np.where(Spannung>0)][0]
+	Spannung,Dehnung=Spannung[Spannung>0],Dehnung[Spannung>0]-Dehnung[Spannung>0][0]
 
 	R=max(Spannung)
 
@@ -73,10 +73,10 @@ def mech(f,Dehngrenze,L,alpha,*args):
 	E,disp=siegel[0],siegel[1]
 
 	Dehnung+=disp/E
-	Spannung,Dehnung=np.append(0,Spannung[np.where(Dehnung>0)]),np.append(0,Dehnung[np.where(Dehnung>0)])
+	Spannung,Dehnung=np.append(0,Spannung[Dehnung>0]),np.append(0,Dehnung[Dehnung>0])
 
 	indBruch=np.where(Spannung>=R/10)[-1][-1]
-	Agt=float(Dehnung[np.where(Spannung==R)][0])
+	Agt=float(Dehnung[Spannung==R][0])
 	At=float(Dehnung[indBruch])
 
 	Ag=Agt-R/E
@@ -86,13 +86,13 @@ def mech(f,Dehngrenze,L,alpha,*args):
 		Dehngrenze=Ag
 		Rp=R
 	else:
-		Rp=Spannung[np.where(Dehnung-Spannung/E>=Dehngrenze)][0]
+		Rp=Spannung[Dehnung-Spannung/E>=Dehngrenze][0]
 
 	Wt=np.trapz(Spannung[:indBruch],x=Dehnung[:indBruch])
 	W=Wt-R**2/E/2
 
 	if 'Bahadur' in [*args]:
-		Bereich=np.where(Dehnung-Spannung/E<Dehngrenze)
+		Bereich=Dehnung-Spannung/E<Dehngrenze
 		m,sigma0=Bahadur(f,np.log(Dehnung[Bereich]+1),Spannung[Bereich]*(Dehnung[Bereich]+1))
 		print(filename,'m',m,'sigma0',sigma0)
 
@@ -120,9 +120,9 @@ def mech(f,Dehngrenze,L,alpha,*args):
 	plt.errorbar(At-float(np.median(Spannung[indBruch-5:indBruch]))/E,0,marker='s',color='k',markersize=1,elinewidth=0.5,capthick=0.5,capsize=2,linewidth=0,path_effects=[pe.Stroke(linewidth=2,foreground='w'),pe.Normal()],zorder=10)
 	plt.errorbar(At,float(np.median(Spannung[indBruch-5:indBruch])),marker='s',color='k',markersize=1,elinewidth=0.5,capthick=0.5,capsize=2,linewidth=0,path_effects=[pe.Stroke(linewidth=2,foreground='w'),pe.Normal()],zorder=10)
 
-	plt.plot(Dehnung[np.where(Dehnung<=At*1.5)],Spannung[np.where(Dehnung<=At*1.5)],'k',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
+	plt.plot(Dehnung[Dehnung<=At*1.5],Spannung[Dehnung<=At*1.5],'k',linewidth=0.5,path_effects=[pe.Stroke(linewidth=1,foreground='white'),pe.Normal()])
 
-	plt.xlim([-max(Dehnung[np.where(Dehnung<=At*1.5)])*0.05,max(Dehnung[np.where(Dehnung<=At*1.5)])*1.05])
+	plt.xlim([-max(Dehnung[Dehnung<=At*1.5])*0.05,max(Dehnung[Dehnung<=At*1.5])*1.05])
 	plt.ylim([-R*0.05,R*1.1])
 
 	plt.xlabel(r'$\epsilon/1$',fontsize=10)
@@ -130,7 +130,7 @@ def mech(f,Dehngrenze,L,alpha,*args):
 	plt.tick_params(axis='both',pad=2,labelsize=8)
 	plt.ticklabel_format(style='sci',axis='y',scilimits=(0,0))
 	plt.tight_layout(pad=0.1)
-	plt.savefig(str(os.path.splitext(f)[0])+'.pdf')
+	# ~ plt.savefig(str(os.path.splitext(f)[0])+'.pdf')
 	plt.savefig(str(os.path.splitext(f)[0])+'.png',dpi=300)
 
 	return filename,R,E,A,W,Rp,Ag,At,Wt
